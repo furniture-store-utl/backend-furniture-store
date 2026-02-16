@@ -1,5 +1,1 @@
-"""
-
-from .responses import success_response, error_response, paginated_response
-
-"""
+# Utilities are organized in submodules (e.g., app.utils.responses).
