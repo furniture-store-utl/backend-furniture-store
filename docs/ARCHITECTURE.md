@@ -46,7 +46,7 @@ responsabilidades y bajo acoplamiento.
 ```python
 # app/catalogs/colors/routes.py
 
-@get_all_colors.route('/', methods=['GET'])
+@colors_bp.route('/', methods=['GET'])
 def get_all_colors():
     """Endpoint para obtener todos los colores."""
     colors = ColorService.get_all()
