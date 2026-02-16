@@ -7,14 +7,12 @@ JSON consistentes en toda la API.
 
 from typing import Any, Optional
 
-from flask import jsonify
+from flask import Response, jsonify
 
 
 def success_response(
-        data: Any = None,
-        message: str = "Operación exitosa",
-        status_code: int = 200
-):
+    data: Any = None, message: str = "Operación exitosa", status_code: int = 200
+) -> tuple[Response, int]:
     """
     Genera una respuesta de éxito estandarizada.
 
@@ -26,19 +24,15 @@ def success_response(
     Returns:
         Tuple con la respuesta JSON y el código de estado
     """
-    response = {
-        "success": True,
-        "message": message,
-        "data": data
-    }
+    response = {"success": True, "message": message, "data": data}
     return jsonify(response), status_code
 
 
 def error_response(
-        message: str = "Ha ocurrido un error",
-        status_code: int = 400,
-        details: Optional[dict] = None
-):
+    message: str = "Ha ocurrido un error",
+    status_code: int = 400,
+    details: Optional[dict] = None,
+) -> tuple[Response, int]:
     """
     Genera una respuesta de error estandarizada.
 
@@ -50,25 +44,19 @@ def error_response(
     Returns:
         Tuple con la respuesta JSON y el código de estado
     """
-    response = {
-        "success": False,
-        "error": {
-            "message": message,
-            "code": status_code
-        }
-    }
+    response = {"success": False, "error": {"message": message, "code": status_code}}
     if details:
         response["error"]["details"] = details
     return jsonify(response), status_code
 
 
 def paginated_response(
-        data: list,
-        page: int,
-        per_page: int,
-        total: int,
-        message: str = "Datos obtenidos exitosamente"
-):
+    data: list,
+    page: int,
+    per_page: int,
+    total: int,
+    message: str = "Datos obtenidos exitosamente",
+) -> tuple[Response, int]:
     """
     Genera una respuesta paginada estandarizada.
 
@@ -94,7 +82,7 @@ def paginated_response(
             "total": total,
             "total_pages": total_pages,
             "has_next": page < total_pages,
-            "has_prev": page > 1
-        }
+            "has_prev": page > 1,
+        },
     }
     return jsonify(response), 200
