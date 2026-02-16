@@ -11,7 +11,9 @@ from flask import Response, jsonify
 
 
 def success_response(
-    data: Any = None, message: str = "Operación exitosa", status_code: int = 200
+        data: Any = None,
+        message: str = "Operación exitosa",
+        status_code: int = 200
 ) -> tuple[Response, int]:
     """
     Genera una respuesta de éxito estandarizada.
@@ -29,9 +31,9 @@ def success_response(
 
 
 def error_response(
-    message: str = "Ha ocurrido un error",
-    status_code: int = 400,
-    details: Optional[dict] = None,
+        message: str = "Ha ocurrido un error",
+        status_code: int = 400,
+        details: Optional[dict] = None
 ) -> tuple[Response, int]:
     """
     Genera una respuesta de error estandarizada.
@@ -51,11 +53,11 @@ def error_response(
 
 
 def paginated_response(
-    data: list,
-    page: int,
-    per_page: int,
-    total: int,
-    message: str = "Datos obtenidos exitosamente",
+        data: list,
+        page: int,
+        per_page: int,
+        total: int,
+        message: str = "Datos obtenidos exitosamente"
 ) -> tuple[Response, int]:
     """
     Genera una respuesta paginada estandarizada.
