@@ -1,1 +1,3 @@
-# TODO: Create SQLALCHEMY Connection
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()

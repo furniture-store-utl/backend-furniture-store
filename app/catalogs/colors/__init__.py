@@ -1,1 +1,0 @@
-# TODO: Using factory pattern create color package
