@@ -1,7 +1,7 @@
 from flask import Flask
 
 from config import Config
-from .extensions import db
+from .extensions import db, migrate
 
 
 def create_app():
@@ -13,6 +13,7 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
 
     # Register blueprints
     # app.register_blueprint(main)
