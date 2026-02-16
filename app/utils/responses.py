@@ -26,11 +26,7 @@ def success_response(
     Returns:
         Tuple con la respuesta JSON y el código de estado
     """
-    response = {
-        "success": True,
-        "message": message,
-        "data": data
-    }
+    response = {"success": True, "message": message, "data": data}
     return jsonify(response), status_code
 
 
@@ -50,13 +46,7 @@ def error_response(
     Returns:
         Tuple con la respuesta JSON y el código de estado
     """
-    response = {
-        "success": False,
-        "error": {
-            "message": message,
-            "code": status_code
-        }
-    }
+    response = {"success": False, "error": {"message": message, "code": status_code}}
     if details:
         response["error"]["details"] = details
     return jsonify(response), status_code
@@ -94,7 +84,7 @@ def paginated_response(
             "total": total,
             "total_pages": total_pages,
             "has_next": page < total_pages,
-            "has_prev": page > 1
-        }
+            "has_prev": page > 1,
+        },
     }
     return jsonify(response), 200
