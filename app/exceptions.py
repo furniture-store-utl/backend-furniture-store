@@ -12,7 +12,7 @@ class AppException(Exception):
     """Excepción base de la aplicación."""
 
     def __init__(self, message: str, status_code: int = 500, payload: dict = None):
-        super().__init__()
+        super().__init__(message)
         self.message = message
         self.status_code = status_code
         self.payload = payload
