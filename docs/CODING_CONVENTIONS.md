@@ -208,7 +208,9 @@ class ColorService:
 Utilizamos el formato **Google Style** para docstrings:
 
 ```python
-def create_color(name: str, hex_code: str = None) -> dict:
+from typing import Optional
+
+def create_color(name: str, hex_code: Optional[str] = None) -> dict:
     """
     Crea un nuevo color en el catálogo.
     
