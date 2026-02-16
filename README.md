@@ -94,8 +94,8 @@ pip install -r requirements.txt
 
 Crear un archivo `.env` en la raíz del proyecto:
 
-- `.env.template` para referencia. Configurar las variables necesarias.
-- No eliminar el archivo `.env.template`, solo copiar su estructura para crear `.env`.
+- `.env-template` para referencia. Configurar las variables necesarias.
+- No eliminar el archivo `.env-template`, solo copiar su estructura para crear `.env`.
 - No subir el archivo `.env` al repositorio, ya que contiene información sensible.
 
 ---
