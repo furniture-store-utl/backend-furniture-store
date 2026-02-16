@@ -7,7 +7,7 @@ JSON consistentes en toda la API.
 
 from typing import Any, Optional
 
-from flask import jsonify, Response
+from flask import Response, jsonify
 
 
 def success_response(
