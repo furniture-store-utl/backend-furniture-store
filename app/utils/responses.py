@@ -7,14 +7,14 @@ JSON consistentes en toda la API.
 
 from typing import Any, Optional
 
-from flask import jsonify
+from flask import Response, jsonify
 
 
 def success_response(
         data: Any = None,
         message: str = "Operación exitosa",
         status_code: int = 200
-):
+) -> tuple[Response, int]:
     """
     Genera una respuesta de éxito estandarizada.
 
@@ -38,7 +38,7 @@ def error_response(
         message: str = "Ha ocurrido un error",
         status_code: int = 400,
         details: Optional[dict] = None
-):
+) -> tuple[Response, int]:
     """
     Genera una respuesta de error estandarizada.
 
@@ -68,7 +68,7 @@ def paginated_response(
         per_page: int,
         total: int,
         message: str = "Datos obtenidos exitosamente"
-):
+) -> tuple[Response, int]:
     """
     Genera una respuesta paginada estandarizada.
 
