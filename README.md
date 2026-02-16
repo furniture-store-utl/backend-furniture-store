@@ -133,22 +133,118 @@ pytest
 ## 📂 Estructura del Proyecto
 
 ```
-backend-muebleria/
+backend-furniture-store/
 │
-├── app/
-│   ├── __init__.py
-│   ├── extensions.py
-│   ├── catalogs/
-│   ├── furnitures/
-│   ├── .../
-│   ├── models/
+├── app/                          # Paquete principal de la aplicación
+│   ├── __init__.py               # Factory de la aplicación Flask (create_app)
+│   ├── extensions.py             # Extensiones de Flask (SQLAlchemy, Migrate)
+│   ├── exceptions.py             # Excepciones personalizadas y manejo de errores
+│   │
+│   ├── catalogs/                 # Módulo de catálogos
+│   │   └── colors/               # Submódulo de colores
+│   │       ├── __init__.py
+│   │       ├── routes.py         # Endpoints/Rutas de la API
+│   │       └── services.py       # Lógica de negocio
+│   │
+│   ├── models/                   # Capa de modelos (entidades de BD)
+│   │   └── color.py              # Modelo de Color
+│   │
+│   └── utils/                    # Utilidades comunes
+│       ├── __init__.py
+│       └── responses.py          # Respuestas HTTP estandarizadas
 │
-├── venv/
-├── requirements.txt
-├── .env
-├── run.py
+├── docs/                         # Documentación del proyecto
+│   ├── ARCHITECTURE.md           # Documentación de arquitectura
+│   └── CODING_CONVENTIONS.md     # Convenciones de código
+│
+├── config.py                     # Configuración del proyecto
+├── run.py                        # Punto de entrada de la aplicación
+├── requirements.txt              # Dependencias del proyecto
+├── .env                          # Variables de entorno (no versionar)
+├── .env-template                 # Plantilla de variables de entorno
 └── README.md
 ```
+
+---
+
+## 🏗️ Arquitectura en Capas
+
+El proyecto está diseñado siguiendo una **arquitectura en capas** para separar responsabilidades y facilitar el
+mantenimiento:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CAPA DE PRESENTACIÓN                     │
+│                      (routes.py)                            │
+│         Endpoints REST API / Controladores                  │
+├─────────────────────────────────────────────────────────────┤
+│                  CAPA DE LÓGICA DE NEGOCIO                  │
+│                      (services.py)                          │
+│     Reglas de negocio / Validaciones / Procesamiento        │
+├─────────────────────────────────────────────────────────────┤
+│                    CAPA DE DATOS/MODELOS                    │
+│                       (models/)                             │
+│          Entidades / ORM SQLAlchemy / Base de Datos         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 📁 Descripción de Capas
+
+| Capa              | Archivos                     | Responsabilidad                                                                        |
+|-------------------|------------------------------|----------------------------------------------------------------------------------------|
+| **Presentación**  | `routes.py`                  | Define los endpoints de la API REST, recibe peticiones HTTP y devuelve respuestas JSON |
+| **Servicios**     | `services.py`                | Contiene la lógica de negocio, validaciones y orquestación de operaciones              |
+| **Modelos**       | `models/*.py`                | Define las entidades y su mapeo a tablas de base de datos usando SQLAlchemy ORM        |
+| **Configuración** | `config.py`, `extensions.py` | Configuración del entorno, conexión a BD y extensiones de Flask                        |
+
+### 📦 Organización por Módulos
+
+El proyecto organiza las funcionalidades en **módulos de dominio** dentro de `app/`:
+
+```
+app/
+├── catalogs/           # Catálogos del sistema
+│   ├── colors/         # Gestión de colores
+│   ├── wood_types/     # Tipos de madera (futuro)
+│   └── furniture_types/# Tipos de muebles (futuro)
+│
+├── inventory/          # Control de inventario (futuro)
+├── production/         # Procesos de producción (futuro)
+└── models/             # Todos los modelos de la aplicación
+```
+
+### 🔄 Flujo de una Petición
+
+```
+Cliente HTTP
+     │
+     ▼
+┌─────────────┐
+│  routes.py  │  ← Recibe la petición, valida parámetros
+└─────────────┘
+     │
+     ▼
+┌─────────────┐
+│ services.py │  ← Ejecuta lógica de negocio
+└─────────────┘
+     │
+     ▼
+┌─────────────┐
+│  models/    │  ← Interactúa con la base de datos
+└─────────────┘
+     │
+     ▼
+  Base de Datos (MySQL)
+```
+
+---
+
+## 📚 Documentación Adicional
+
+| Documento                                               | Descripción                                         |
+|---------------------------------------------------------|-----------------------------------------------------|
+| [📐 Arquitectura](docs/ARCHITECTURE.md)                 | Documentación detallada de la arquitectura en capas |
+| [📋 Convenciones de Código](docs/CODING_CONVENTIONS.md) | Estándares y convenciones de desarrollo             |
 
 ---
 
