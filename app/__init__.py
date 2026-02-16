@@ -1,10 +1,20 @@
 from flask import Flask
 
 from config import Config
+from .exceptions import register_error_handlers
 from .extensions import db, migrate
 
 
 def create_app():
+    """
+    Factory de la aplicación Flask.
+
+    Crea y configura la instancia de la aplicación Flask,
+    inicializa extensiones y registra blueprints.
+
+    Returns:
+        Flask: Instancia configurada de la aplicación
+    """
     # Create Flask application
     app = Flask(__name__)
 
@@ -15,7 +25,11 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # Register error handlers
+    register_error_handlers(app)
+
     # Register blueprints
-    # app.register_blueprint(main)
+    # from .catalogs.colors import colors_bp
+    # app.register_blueprint(colors_bp, url_prefix='/api/v1/colors')
 
     return app
