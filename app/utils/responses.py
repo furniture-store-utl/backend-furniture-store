@@ -77,6 +77,7 @@ def paginated_response(
         page: Número de página actual
         per_page: Elementos por página
         total: Total de elementos
+        message: Mensaje descriptivo de la operación
 
     Returns:
         Tuple con la respuesta JSON y código 200
