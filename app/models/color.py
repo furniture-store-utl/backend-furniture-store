@@ -5,7 +5,7 @@ from ..extensions import db
 
 class Color(db.Model):
     """
-    Modelo de Color para cátalogo de referencias de colores.
+    Modelo de Color para catálogo de referencias de colores.
 
     Attributes:
           id_color: Identificador único del color.
