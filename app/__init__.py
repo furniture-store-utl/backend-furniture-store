@@ -25,6 +25,9 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # Import models to register them with SQLAlchemy
+    from . import models  # noqa: F401
+
     # Register error handlers
     register_error_handlers(app)
 
