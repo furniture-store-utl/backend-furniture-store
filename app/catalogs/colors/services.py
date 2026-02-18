@@ -13,12 +13,12 @@ class ColorService:
     """Servicio para operaciones de negocio relacionadas con colores."""
 
     @staticmethod
-    def get_all() -> list:
+    def get_all() -> list[Color]:
         """
         Obtiene todos los colores activos.
 
         Returns:
-            list: Lista de objetos Color activos
+            list[Color]: Lista de objetos Color activos
         """
         return Color.query.filter_by(active=True).all()
 
