@@ -224,15 +224,18 @@ def create(data: dict) -> dict:
 
 
 # En routes.py - Se captura en la ruta con try/except
-@colors_bp.route('/', methods=['POST'])
+@colors_bp.route('/create', methods=['GET', 'POST'])
 def create_color():
-    data = {'name': request.form.get('name')}
-    try:
-        ColorService.create(data)
-        flash('Color creado exitosamente', 'success')
-    except (ValidationError, ConflictError) as e:
-        flash(e.message, 'error')
-    return redirect(url_for('colors.list_colors'))
+    form = ColorForm()
+    if form.validate_on_submit():
+        data = {'name': form.name.data}
+        try:
+            ColorService.create(data)
+            flash('Color creado exitosamente', 'success')
+            return redirect(url_for('colors.create_color'))
+        except ConflictError as e:
+            flash(e.message, 'error')
+    return render_template('colors/create.html', form=form)
 
 
 # En exceptions.py - Se mantiene el handler global para errores no capturados
