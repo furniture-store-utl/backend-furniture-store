@@ -17,3 +17,11 @@ class Config:
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # SECRET_KEY is required for session management and CSRF protection
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        # Only allow default in development; production must set SECRET_KEY
+        if os.getenv("FLASK_ENV") == "production":
+            raise ValueError("SECRET_KEY must be set in production environment")
+        SECRET_KEY = "dev-secret-key-change-in-production"
