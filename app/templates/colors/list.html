@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Colores - Furniture Store{% endblock %}
+
+{% block content %}
+<h1>Catálogo de Colores</h1>
+
+<a href="{{ url_for('colors.create_color') }}">Agregar nuevo color</a>
+
+<h2>Lista de colores</h2>
+{% if colors %}
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Activo</th>
+            <th>Creado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for color in colors %}
+        <tr>
+            <td>{{ color.id_color }}</td>
+            <td>{{ color.name }}</td>
+            <td>{{ "Sí" if color.active else "No" }}</td>
+            <td>{{ color.created_at.strftime('%Y-%m-%d %H:%M') if color.created_at else 'N/A' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No hay colores registrados.</p>
+{% endif %}
+{% endblock %}

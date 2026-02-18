@@ -10,6 +10,18 @@ from .services import ColorService
 from app.exceptions import ConflictError
 
 
+@colors_bp.route("/", methods=["GET"])
+def list_colors():
+    """
+    Muestra la lista de colores del catálogo.
+
+    Returns:
+        HTML: Página con la lista de colores
+    """
+    colors = ColorService.get_all()
+    return render_template("colors/list.html", colors=colors)
+
+
 @colors_bp.route("/create", methods=["GET", "POST"])
 def create_color():
     """

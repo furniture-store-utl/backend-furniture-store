@@ -13,6 +13,16 @@ class ColorService:
     """Servicio para operaciones de negocio relacionadas con colores."""
 
     @staticmethod
+    def get_all() -> list:
+        """
+        Obtiene todos los colores activos.
+
+        Returns:
+            list: Lista de objetos Color activos
+        """
+        return Color.query.filter_by(active=True).all()
+
+    @staticmethod
     def create(data: dict) -> dict:
         """
         Crea un nuevo color en el catálogo.
