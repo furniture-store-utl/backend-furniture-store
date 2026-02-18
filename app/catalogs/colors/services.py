@@ -40,7 +40,7 @@ class ColorService:
 
         color = Color(name=name)
         db.session.add(color)
-        
+
         try:
             db.session.commit()
         except IntegrityError:
