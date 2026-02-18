@@ -17,7 +17,8 @@ desde la materia prima hasta el producto terminado.
 
 * Python 3.10.11
 * Flask
-* Flask SQLAlchemy
+* Flask-SQLAlchemy
+* Flask-WTF (Formularios y CSRF)
 * Jinja2 (motor de templates)
 * Base de datos relacional (MySQL)
 * pip
@@ -138,26 +139,23 @@ backend-furniture-store/
 │
 ├── app/                          # Paquete principal de la aplicación
 │   ├── __init__.py               # Factory de la aplicación Flask (create_app)
-│   ├── extensions.py             # Extensiones de Flask (SQLAlchemy, Migrate)
+│   ├── extensions.py             # Extensiones de Flask (SQLAlchemy, Migrate, CSRF)
 │   ├── exceptions.py             # Excepciones personalizadas y manejo de errores
 │   │
 │   ├── catalogs/                 # Módulo de catálogos
 │   │   └── colors/               # Submódulo de colores
 │   │       ├── __init__.py
 │   │       ├── routes.py         # Rutas y controladores
-│   │       └── services.py       # Lógica de negocio
+│   │       ├── services.py       # Lógica de negocio
+│   │       └── forms.py          # Formularios con WTForms
 │   │
 │   ├── models/                   # Capa de modelos (entidades de BD)
 │   │   └── color.py              # Modelo de Color
 │   │
-│   ├── templates/                # Templates Jinja2
-│   │   ├── base.html             # Template base (layout)
-│   │   └── colors/
-│   │       └── list.html         # Vista de colores
-│   │
-│   └── utils/                    # Utilidades comunes
-│       ├── __init__.py
-│       └── responses.py          # Respuestas HTTP estandarizadas
+│   └── templates/                # Templates Jinja2
+│       ├── base.html             # Template base (layout)
+│       └── colors/
+│           └── create.html       # Formulario de creación
 │
 ├── docs/                         # Documentación del proyecto
 │   ├── ARCHITECTURE.md           # Documentación de arquitectura

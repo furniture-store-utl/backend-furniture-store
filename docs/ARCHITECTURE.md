@@ -42,39 +42,37 @@ responsabilidades y bajo acoplamiento. Utiliza **Jinja2** como motor de template
 
 ## 🧱 Capas de la Arquitectura
 
-### 1. Capa de Presentación (routes.py + templates/)
+### 1. Capa de Presentación (routes.py + forms.py + templates/)
 
-**Responsabilidad:** Manejar las peticiones HTTP y renderizar vistas HTML con Jinja2.
+**Responsabilidad:** Manejar las peticiones HTTP, validar formularios con WTForms y renderizar vistas HTML con Jinja2.
 
 ```python
 # app/catalogs/colors/routes.py
 
-@colors_bp.route('/', methods=['GET'])
-def list_colors():
-    """Muestra la lista de colores del catálogo."""
-    colors = ColorService.get_all()
-    return render_template('colors/list.html', colors=colors)
-
-
-@colors_bp.route('/', methods=['POST'])
+@colors_bp.route('/create', methods=['GET', 'POST'])
 def create_color():
-    """Crea un nuevo color desde formulario."""
-    data = {'name': request.form.get('name')}
-    try:
-        ColorService.create(data)
-        flash('Color creado exitosamente', 'success')
-    except (ValidationError, ConflictError) as e:
-        flash(e.message, 'error')
-    return redirect(url_for('colors.list_colors'))
+    """Muestra el formulario y crea un nuevo color."""
+    form = ColorForm()
+
+    if form.validate_on_submit():
+        data = {'name': form.name.data}
+        try:
+            ColorService.create(data)
+            flash('Color creado exitosamente', 'success')
+            return redirect(url_for('colors.create_color'))
+        except ConflictError as e:
+            flash(e.message, 'error')
+
+    return render_template('colors/create.html', form=form)
 ```
 
 **Características:**
 
 - Define las rutas y renderiza templates Jinja2
-- Recibe datos desde formularios HTML (`request.form`)
+- Usa `FlaskForm` para validación de formularios
+- Protección CSRF automática con `form.hidden_tag()`
 - Delega la lógica de negocio a la capa de servicios
 - Usa `flash()` para mensajes de retroalimentación al usuario
-- Redirige después de operaciones POST (patrón PRG)
 
 ---
 
@@ -86,11 +84,6 @@ def create_color():
 # app/catalogs/colors/services.py
 
 class ColorService:
-    @staticmethod
-    def get_all() -> list:
-        """Obtiene todos los colores activos."""
-        return Color.query.filter_by(active=True).all()
-
     @staticmethod
     def create(data: dict) -> dict:
         """Crea un nuevo color con validaciones de negocio."""
@@ -262,12 +255,13 @@ app/
 │   └── colors/
 │       ├── __init__.py      # Blueprint
 │       ├── routes.py        # Rutas y controladores
-│       └── services.py      # Lógica de negocio
+│       ├── services.py      # Lógica de negocio
+│       └── forms.py         # Formularios con WTForms
 │
 ├── templates/
 │   ├── base.html            # Template base (layout)
 │   └── colors/
-│       └── list.html         # Vista de colores
+│       └── create.html       # Formulario de creación
 ```
 
 ### Registro de Blueprints
@@ -291,19 +285,19 @@ def create_app():
 
 ### Extensiones Actuales
 
-| Extensión        | Propósito                              |
-|------------------|----------------------------------------|
-| Flask-SQLAlchemy | ORM para base de datos                 |
-| Flask-Migrate    | Migraciones de BD                      |
-| Jinja2           | Motor de templates (incluido en Flask) |
+| Extensión        | Propósito                                   |
+|------------------|---------------------------------------------|
+| Flask-SQLAlchemy | ORM para base de datos                      |
+| Flask-Migrate    | Migraciones de BD                           |
+| Flask-WTF        | Formularios con validación y protección CSRF |
+| Jinja2           | Motor de templates (incluido en Flask)       |
 
 ### Extensiones Recomendadas (Futuro)
 
 | Extensión       | Propósito                             |
-|-----------------|---------------------------------------|
-| Flask-WTF       | Validación de formularios con CSRF    |
-| Flask-Login     | Autenticación y manejo de sesiones    |
-| Bootstrap/CSS   | Estilos para los templates            |
+|-----------------|----------------------------------------|
+| Flask-Login     | Autenticación y manejo de sesiones     |
+| Bootstrap/CSS   | Estilos para los templates             |
 
 ---
 
@@ -321,19 +315,16 @@ backend-furniture-store/
 │   │   └── colors/
 │   │       ├── __init__.py
 │   │       ├── routes.py
-│   │       └── services.py
+│   │       ├── services.py
+│   │       └── forms.py
 │   │
 │   ├── models/                       # Modelos de datos
 │   │   └── color.py
 │   │
-│   ├── templates/                    # Templates Jinja2
-│   │   ├── base.html                 # Template base (layout)
-│   │   └── colors/
-│   │       └── list.html             # Vista de colores
-│   │
-│   └── utils/                        # Utilidades comunes
-│       ├── __init__.py
-│       └── responses.py
+│   └── templates/                    # Templates Jinja2
+│       ├── base.html                 # Template base (layout)
+│       └── colors/
+│           └── create.html           # Formulario de creación
 │
 ├── docs/                             # Documentación
 │   ├── ARCHITECTURE.md

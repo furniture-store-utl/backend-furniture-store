@@ -6,8 +6,14 @@
 <h1>Agregar nuevo color</h1>
 
 <form method="POST" action="{{ url_for('colors.create_color') }}">
-    <label for="name">Nombre:</label>
-    <input type="text" id="name" name="name" required>
+    {{ form.hidden_tag() }}
+
+    {{ form.name.label }}
+    {{ form.name(size=30) }}
+    {% for error in form.name.errors %}
+        <p style="color: red;">{{ error }}</p>
+    {% endfor %}
+
     <button type="submit">Crear</button>
 </form>
 {% endblock %}

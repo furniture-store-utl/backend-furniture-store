@@ -2,41 +2,35 @@
 Rutas/Endpoints para el módulo de colores.
 """
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, url_for
 
 from . import colors_bp
+from .forms import ColorForm
 from .services import ColorService
-from app.exceptions import ConflictError, ValidationError
+from app.exceptions import ConflictError
 
 
-@colors_bp.route("/create", methods=["GET"])
-def create_color_form():
-    """
-    Muestra el formulario para crear un nuevo color.
-
-    Returns:
-        HTML: Página con el formulario de creación de color
-    """
-    return render_template("colors/create.html")
-
-
-@colors_bp.route("/create", methods=["POST"])
+@colors_bp.route("/create", methods=["GET", "POST"])
 def create_color():
     """
-    Crea un nuevo color en el catálogo.
+    Muestra el formulario y crea un nuevo color en el catálogo.
 
-    Form Data:
-        name (str): Nombre del color (requerido)
+    GET: Renderiza el formulario de creación.
+    POST: Valida el formulario, crea el color y redirige.
 
     Returns:
-        Redirect: Redirige al formulario de creación
+        GET - HTML: Página con el formulario de creación de color
+        POST - Redirect: Redirige al formulario con mensaje flash
     """
-    data = {"name": request.form.get("name")}
+    form = ColorForm()
 
-    try:
-        ColorService.create(data)
-        flash("Color creado exitosamente", "success")
-    except (ValidationError, ConflictError) as e:
-        flash(e.message, "error")
+    if form.validate_on_submit():
+        data = {"name": form.name.data}
+        try:
+            ColorService.create(data)
+            flash("Color creado exitosamente", "success")
+            return redirect(url_for("colors.create_color"))
+        except ConflictError as e:
+            flash(e.message, "error")
 
-    return redirect(url_for("colors.create_color_form"))
+    return render_template("colors/create.html", form=form)

@@ -93,11 +93,12 @@ catalogs/
 └── colors/
     ├── __init__.py      # Blueprint y exports
     ├── routes.py        # Rutas y controladores
-    └── services.py      # Lógica de negocio
+    ├── services.py      # Lógica de negocio
+    └── forms.py         # Formularios con WTForms
 
 templates/
 └── colors/
-    └── list.html        # Vista del módulo
+    └── create.html      # Formulario de creación
 ```
 
 ### Contenido de `__init__.py`
@@ -123,43 +124,62 @@ from . import routes  # noqa: E402, F401
 Rutas/Controladores para el módulo de colores.
 """
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, url_for
 
 from . import colors_bp
+from .forms import ColorForm
 from .services import ColorService
-from app.exceptions import ConflictError, ValidationError
+from app.exceptions import ConflictError
 
 
-@colors_bp.route('/', methods=['GET'])
-def list_colors():
-    """
-    Muestra la lista de colores del catálogo.
-    
-    Returns:
-        HTML: Página con la lista de colores
-    """
-    colors = ColorService.get_all()
-    return render_template('colors/list.html', colors=colors)
-
-
-@colors_bp.route('/', methods=['POST'])
+@colors_bp.route('/create', methods=['GET', 'POST'])
 def create_color():
     """
-    Crea un nuevo color desde formulario.
+    Muestra el formulario y crea un nuevo color.
     
-    Form Data:
-        name: Nombre del color
-        
+    GET: Renderiza el formulario de creación.
+    POST: Valida el formulario, crea el color y redirige.
+    
     Returns:
-        Redirect: Redirige a la lista de colores
+        GET - HTML: Página con el formulario
+        POST - Redirect: Redirige con mensaje flash
     """
-    data = {'name': request.form.get('name')}
-    try:
-        ColorService.create(data)
-        flash('Color creado exitosamente', 'success')
-    except (ValidationError, ConflictError) as e:
-        flash(e.message, 'error')
-    return redirect(url_for('colors.list_colors'))
+    form = ColorForm()
+
+    if form.validate_on_submit():
+        data = {'name': form.name.data}
+        try:
+            ColorService.create(data)
+            flash('Color creado exitosamente', 'success')
+            return redirect(url_for('colors.create_color'))
+        except ConflictError as e:
+            flash(e.message, 'error')
+
+    return render_template('colors/create.html', form=form)
+```
+
+### Contenido de `forms.py`
+
+```python
+"""
+Formularios para el módulo de colores.
+"""
+
+from flask_wtf import FlaskForm
+from wtforms import StringField
+from wtforms.validators import DataRequired, Length
+
+
+class ColorForm(FlaskForm):
+    """Formulario para crear un color."""
+
+    name = StringField(
+        'Nombre',
+        validators=[
+            DataRequired(message='El nombre del color es requerido'),
+            Length(max=50, message='El nombre no puede exceder 50 caracteres'),
+        ],
+    )
 ```
 
 ### Contenido de `services.py`
@@ -176,16 +196,6 @@ from app.exceptions import ConflictError, ValidationError
 
 class ColorService:
     """Servicio para operaciones de negocio relacionadas con colores."""
-
-    @staticmethod
-    def get_all() -> list:
-        """
-        Obtiene todos los colores activos.
-        
-        Returns:
-            list: Lista de objetos Color activos
-        """
-        return Color.query.filter_by(active=True).all()
 
     @staticmethod
     def create(data: dict) -> dict:
@@ -362,18 +372,23 @@ tests/
 ### Nomenclatura de Tests
 
 ```python
-def test_list_colors_renders_template():
-    """Test: GET /colors/ renderiza la página de colores."""
+def test_create_color_form_renders_template():
+    """Test: GET /colors/create renderiza el formulario."""
     pass
 
 
 def test_create_color_with_valid_data_redirects():
-    """Test: POST /colors/ con datos válidos redirige a la lista."""
+    """Test: POST /colors/create con datos válidos redirige."""
+    pass
+
+
+def test_create_color_with_empty_name_shows_form_error():
+    """Test: POST /colors/create sin nombre muestra error del formulario."""
     pass
 
 
 def test_create_color_duplicate_shows_error_flash():
-    """Test: POST /colors/ con nombre duplicado muestra flash de error."""
+    """Test: POST /colors/create con nombre duplicado muestra flash de error."""
     pass
 ```
 
@@ -393,13 +408,16 @@ from datetime import datetime
 from typing import List, Optional
 
 # 2. Librerías de terceros
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, url_for
+from flask_wtf import FlaskForm
+from wtforms import StringField
+from wtforms.validators import DataRequired
 from sqlalchemy import or_, and_
 
 # 3. Imports locales
-from app.extensions import db
+from app.extensions import db, csrf
 from app.models.color import Color
-from app.exceptions import ConflictError, ValidationError
+from app.exceptions import ConflictError
 ```
 
 ---
@@ -411,8 +429,9 @@ from app.exceptions import ConflictError, ValidationError
 - [ ] Se usan type hints
 - [ ] Los nombres son descriptivos y siguen las convenciones
 - [ ] Las excepciones se manejan correctamente
-- [ ] Las rutas usan flash messages para retroalimentación
-- [ ] Los templates extienden de `base.html`
+- [ ] Los formularios usan `FlaskForm` con validadores
+- [ ] Los templates incluyen `form.hidden_tag()` para CSRF
+- [ ] Los templates muestran errores de formulario
 - [ ] Se aplica el patrón PRG después de POST
 - [ ] No hay código comentado innecesario
 - [ ] Los imports están ordenados correctamente
