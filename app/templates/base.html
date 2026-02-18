@@ -14,8 +14,8 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <p style="color: {{ 'green' if category == 'success' else 'red' }};">
-                        {{ message }}
+                    <p role="alert" style="color: {{ 'green' if category == 'success' else 'red' }};">
+                        <strong>{{ 'Éxito:' if category == 'success' else 'Error:' }}</strong> {{ message }}
                     </p>
                 {% endfor %}
             {% endif %}

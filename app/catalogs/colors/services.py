@@ -2,6 +2,8 @@
 Servicios de lógica de negocio para colores.
 """
 
+from sqlalchemy.exc import IntegrityError
+
 from app.extensions import db
 from app.models.color import Color
 from app.exceptions import ConflictError, ValidationError
@@ -38,6 +40,11 @@ class ColorService:
 
         color = Color(name=name)
         db.session.add(color)
-        db.session.commit()
+        
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            raise ConflictError(f"Ya existe un color con el nombre '{name}'")
 
         return color.to_dict()

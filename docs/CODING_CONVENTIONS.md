@@ -335,7 +335,7 @@ flash(e.message, 'error')                      # Mensaje de error
 Después de un POST exitoso, siempre redirigir:
 
 ```python
-return redirect(url_for('colors.list_colors'))
+return redirect(url_for('colors.create_color'))
 ```
 
 ---
