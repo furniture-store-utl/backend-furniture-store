@@ -32,7 +32,7 @@ def create_app():
     register_error_handlers(app)
 
     # Register blueprints
-    # from .catalogs.colors import colors_bp
-    # app.register_blueprint(colors_bp, url_prefix='/api/v1/colors')
+    from .catalogs.colors import colors_bp
+    app.register_blueprint(colors_bp, url_prefix='/colors')
 
     return app

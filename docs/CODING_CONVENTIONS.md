@@ -92,9 +92,12 @@ class Color(db.Model):
 catalogs/
 └── colors/
     ├── __init__.py      # Blueprint y exports
-    ├── routes.py        # Endpoints de la API
-    ├── services.py      # Lógica de negocio
-    └── schemas.py       # Validación de datos (opcional)
+    ├── routes.py        # Rutas y controladores
+    └── services.py      # Lógica de negocio
+
+templates/
+└── colors/
+    └── list.html        # Vista del módulo
 ```
 
 ### Contenido de `__init__.py`
@@ -117,40 +120,46 @@ from . import routes  # noqa: E402, F401
 
 ```python
 """
-Rutas/Endpoints para el módulo de colores.
+Rutas/Controladores para el módulo de colores.
 """
 
-from flask import request
+from flask import flash, redirect, render_template, request, url_for
+
 from . import colors_bp
 from .services import ColorService
-from app.utils.responses import success_response, error_response
+from app.exceptions import ConflictError, ValidationError
 
 
 @colors_bp.route('/', methods=['GET'])
-def get_all_colors():
+def list_colors():
     """
-    Obtiene todos los colores del catálogo.
+    Muestra la lista de colores del catálogo.
     
     Returns:
-        JSON: Lista de colores
+        HTML: Página con la lista de colores
     """
     colors = ColorService.get_all()
-    return success_response(data=colors, message="Colores obtenidos exitosamente")
+    return render_template('colors/list.html', colors=colors)
 
 
-@colors_bp.route('/<int:color_id>', methods=['GET'])
-def get_color(color_id: int):
+@colors_bp.route('/', methods=['POST'])
+def create_color():
     """
-    Obtiene un color por su ID.
+    Crea un nuevo color desde formulario.
     
-    Args:
-        color_id: ID del color
+    Form Data:
+        name: Nombre del color
         
     Returns:
-        JSON: Datos del color
+        Redirect: Redirige a la lista de colores
     """
-    color = ColorService.get_by_id(color_id)
-    return success_response(data=color)
+    data = {'name': request.form.get('name')}
+    try:
+        ColorService.create(data)
+        flash('Color creado exitosamente', 'success')
+    except (ValidationError, ConflictError) as e:
+        flash(e.message, 'error')
+    return redirect(url_for('colors.list_colors'))
 ```
 
 ### Contenido de `services.py`
@@ -162,7 +171,7 @@ Servicios de lógica de negocio para colores.
 
 from app.models.color import Color
 from app.extensions import db
-from app.exceptions import NotFoundError, ValidationError
+from app.exceptions import ConflictError, ValidationError
 
 
 class ColorService:
@@ -174,28 +183,36 @@ class ColorService:
         Obtiene todos los colores activos.
         
         Returns:
-            list: Lista de colores serializados
+            list: Lista de objetos Color activos
         """
-        colors = Color.query.filter_by(is_active=True).all()
-        return [color.to_dict() for color in colors]
+        return Color.query.filter_by(active=True).all()
 
     @staticmethod
-    def get_by_id(color_id: int) -> dict:
+    def create(data: dict) -> dict:
         """
-        Obtiene un color por su ID.
+        Crea un nuevo color.
         
         Args:
-            color_id: ID del color
+            data: Diccionario con los datos del color
             
         Returns:
-            dict: Color serializado
+            dict: Color creado serializado
             
         Raises:
-            NotFoundError: Si el color no existe
+            ValidationError: Si el nombre está vacío
+            ConflictError: Si el color ya existe
         """
-        color = Color.query.get(color_id)
-        if not color:
-            raise NotFoundError(f"Color con ID {color_id} no encontrado")
+        name = data.get('name')
+        if not name or not name.strip():
+            raise ValidationError('El nombre del color es requerido')
+
+        existing = Color.query.filter_by(name=name.strip()).first()
+        if existing:
+            raise ConflictError(f"Ya existe un color con el nombre '{name}'")
+
+        color = Color(name=name.strip())
+        db.session.add(color)
+        db.session.commit()
         return color.to_dict()
 ```
 
@@ -252,67 +269,63 @@ def find_color(color_id: int) -> Optional[Color]:
 
 ---
 
-## 🌐 Convenciones de API REST
+## 🌐 Convenciones de Rutas y Vistas
 
 ### URLs
 
 | Acción     | Método | URL                       | Ejemplo            |
-|------------|--------|---------------------------|--------------------|
-| Listar     | GET    | `/api/v1/{recursos}`      | `/api/v1/colors`   |
-| Obtener    | GET    | `/api/v1/{recursos}/{id}` | `/api/v1/colors/1` |
-| Crear      | POST   | `/api/v1/{recursos}`      | `/api/v1/colors`   |
-| Actualizar | PUT    | `/api/v1/{recursos}/{id}` | `/api/v1/colors/1` |
-| Eliminar   | DELETE | `/api/v1/{recursos}/{id}` | `/api/v1/colors/1` |
+|------------|--------|---------------------------|--------------------|   
+| Listar     | GET    | `/{recurso}/`             | `/colors/`         |
+| Crear      | POST   | `/{recurso}/`             | `/colors/`         |
+| Detalle    | GET    | `/{recurso}/{id}`         | `/colors/1`        |
+| Editar     | POST   | `/{recurso}/{id}/edit`    | `/colors/1/edit`   |
+| Eliminar   | POST   | `/{recurso}/{id}/delete`  | `/colors/1/delete` |
 
-### Respuestas JSON
+### Templates Jinja2
 
-#### Respuesta Exitosa
+#### Template Base (`base.html`)
 
-```json
-{
-  "success": true,
-  "message": "Color creado exitosamente",
-  "data": {
-    "id": 1,
-    "name": "Rojo",
-    "hex_code": "#FF0000"
-  }
-}
+Todos los templates extienden de `base.html` que contiene:
+- Estructura HTML común
+- Navegación
+- Bloque de mensajes flash
+- Bloque `content` para contenido específico
+
+```html
+{%- raw %}
+{% extends "base.html" %}
+{% block title %}Título - Furniture Store{% endblock %}
+{% block content %}
+    <!-- Contenido específico -->
+{% endblock %}
+{%- endraw %}
 ```
 
-#### Respuesta de Error
+#### Organización de Templates
 
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Color no encontrado",
-    "code": 404,
-    "details": {
-      "color_id": 999
-    }
-  }
-}
+```
+templates/
+├── base.html              # Layout base
+└── colors/                # Templates por módulo
+    └── list.html          # Listado + formulario
 ```
 
-#### Respuesta Paginada
+#### Mensajes Flash
 
-```json
-{
-  "success": true,
-  "message": "Colores obtenidos exitosamente",
-  "data": [
-    ...
-  ],
-  "pagination": {
-    "page": 1,
-    "per_page": 10,
-    "total": 50,
-    "total_pages": 5,
-    "has_next": true,
-    "has_prev": false
-  }
-}
+Se usa `flash()` para retroalimentación al usuario:
+
+```python
+# En routes.py
+flash('Color creado exitosamente', 'success')  # Mensaje de éxito
+flash(e.message, 'error')                      # Mensaje de error
+```
+
+#### Patrón PRG (Post/Redirect/Get)
+
+Después de un POST exitoso, siempre redirigir:
+
+```python
+return redirect(url_for('colors.list_colors'))
 ```
 
 ---
@@ -349,18 +362,18 @@ tests/
 ### Nomenclatura de Tests
 
 ```python
-def test_get_all_colors_returns_list():
-    """Test: GET /colors retorna lista de colores."""
+def test_list_colors_renders_template():
+    """Test: GET /colors/ renderiza la página de colores."""
     pass
 
 
-def test_get_color_by_id_not_found_returns_404():
-    """Test: GET /colors/{id} retorna 404 si no existe."""
+def test_create_color_with_valid_data_redirects():
+    """Test: POST /colors/ con datos válidos redirige a la lista."""
     pass
 
 
-def test_create_color_with_valid_data_returns_201():
-    """Test: POST /colors con datos válidos retorna 201."""
+def test_create_color_duplicate_shows_error_flash():
+    """Test: POST /colors/ con nombre duplicado muestra flash de error."""
     pass
 ```
 
@@ -380,14 +393,13 @@ from datetime import datetime
 from typing import List, Optional
 
 # 2. Librerías de terceros
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sqlalchemy import or_, and_
 
 # 3. Imports locales
 from app.extensions import db
 from app.models.color import Color
-from app.exceptions import NotFoundError
-from app.utils.responses import success_response
+from app.exceptions import ConflictError, ValidationError
 ```
 
 ---
@@ -399,7 +411,9 @@ from app.utils.responses import success_response
 - [ ] Se usan type hints
 - [ ] Los nombres son descriptivos y siguen las convenciones
 - [ ] Las excepciones se manejan correctamente
-- [ ] Los endpoints usan las respuestas estandarizadas
+- [ ] Las rutas usan flash messages para retroalimentación
+- [ ] Los templates extienden de `base.html`
+- [ ] Se aplica el patrón PRG después de POST
 - [ ] No hay código comentado innecesario
 - [ ] Los imports están ordenados correctamente
 

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Color - Furniture Store{% endblock %}
+
+{% block content %}
+<h1>Agregar nuevo color</h1>
+
+<form method="POST" action="{{ url_for('colors.create_color') }}">
+    <label for="name">Nombre:</label>
+    <input type="text" id="name" name="name" required>
+    <button type="submit">Crear</button>
+</form>
+{% endblock %}

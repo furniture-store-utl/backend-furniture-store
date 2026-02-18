@@ -18,6 +18,7 @@ desde la materia prima hasta el producto terminado.
 * Python 3.10.11
 * Flask
 * Flask SQLAlchemy
+* Jinja2 (motor de templates)
 * Base de datos relacional (MySQL)
 * pip
 * Virtual Environment (venv)
@@ -143,11 +144,16 @@ backend-furniture-store/
 │   ├── catalogs/                 # Módulo de catálogos
 │   │   └── colors/               # Submódulo de colores
 │   │       ├── __init__.py
-│   │       ├── routes.py         # Endpoints/Rutas de la API
+│   │       ├── routes.py         # Rutas y controladores
 │   │       └── services.py       # Lógica de negocio
 │   │
 │   ├── models/                   # Capa de modelos (entidades de BD)
 │   │   └── color.py              # Modelo de Color
+│   │
+│   ├── templates/                # Templates Jinja2
+│   │   ├── base.html             # Template base (layout)
+│   │   └── colors/
+│   │       └── list.html         # Vista de colores
 │   │
 │   └── utils/                    # Utilidades comunes
 │       ├── __init__.py
@@ -167,16 +173,16 @@ backend-furniture-store/
 
 ---
 
-## 🏗️ Arquitectura en Capas
+## 🏗️ Arquitectura MVC en Capas
 
-El proyecto está diseñado siguiendo una **arquitectura en capas** para separar responsabilidades y facilitar el
-mantenimiento:
+El proyecto está diseñado siguiendo una **arquitectura MVC en capas** con Jinja2 como motor de templates para separar
+responsabilidades y facilitar el mantenimiento:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    CAPA DE PRESENTACIÓN                     │
-│                      (routes.py)                            │
-│         Endpoints REST API / Controladores                  │
+│               (routes.py + templates Jinja2)                │
+│          Rutas / Controladores / Vistas HTML                │
 ├─────────────────────────────────────────────────────────────┤
 │                  CAPA DE LÓGICA DE NEGOCIO                  │
 │                      (services.py)                          │
@@ -190,12 +196,12 @@ mantenimiento:
 
 ### 📁 Descripción de Capas
 
-| Capa              | Archivos                     | Responsabilidad                                                                        |
-|-------------------|------------------------------|----------------------------------------------------------------------------------------|
-| **Presentación**  | `routes.py`                  | Define los endpoints de la API REST, recibe peticiones HTTP y devuelve respuestas JSON |
-| **Servicios**     | `services.py`                | Contiene la lógica de negocio, validaciones y orquestación de operaciones              |
-| **Modelos**       | `models/*.py`                | Define las entidades y su mapeo a tablas de base de datos usando SQLAlchemy ORM        |
-| **Configuración** | `config.py`, `extensions.py` | Configuración del entorno, conexión a BD y extensiones de Flask                        |
+| Capa              | Archivos                        | Responsabilidad                                                                             |
+|-------------------|-------------------------------- |---------------------------------------------------------------------------------------------|
+| **Presentación**  | `routes.py` + `templates/`      | Define las rutas, recibe peticiones HTTP y renderiza vistas HTML con Jinja2                 |
+| **Servicios**     | `services.py`                   | Contiene la lógica de negocio, validaciones y orquestación de operaciones                   |
+| **Modelos**       | `models/*.py`                   | Define las entidades y su mapeo a tablas de base de datos usando SQLAlchemy ORM             |
+| **Configuración** | `config.py`, `extensions.py`    | Configuración del entorno, conexión a BD y extensiones de Flask                             |
 
 ### 📦 Organización por Módulos
 
@@ -216,11 +222,11 @@ app/
 ### 🔄 Flujo de una Petición
 
 ```
-Cliente HTTP
+Navegador Web
      │
      ▼
 ┌─────────────┐
-│  routes.py  │  ← Recibe la petición, valida parámetros
+│  routes.py  │  ← Recibe la petición, procesa formularios
 └─────────────┘
      │
      ▼
@@ -235,6 +241,14 @@ Cliente HTTP
      │
      ▼
   Base de Datos (MySQL)
+     │
+     ▼
+┌─────────────┐
+│ template.html│ ← Renderiza vista HTML con Jinja2
+└─────────────┘
+     │
+     ▼
+  Navegador Web
 ```
 
 ---

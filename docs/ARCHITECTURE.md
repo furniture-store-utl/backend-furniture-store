@@ -6,23 +6,26 @@ Este documento describe la arquitectura base del proyecto **Backend Furniture St
 
 ## 📐 Visión General
 
-El proyecto implementa una **arquitectura en capas** (Layered Architecture) siguiendo los principios de separación de
-responsabilidades y bajo acoplamiento.
+El proyecto implementa una **arquitectura MVC en capas** (Model-View-Controller) siguiendo los principios de separación de
+responsabilidades y bajo acoplamiento. Utiliza **Jinja2** como motor de templates para renderizar las vistas HTML.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENTE                                 │
-│                    (Frontend / Mobile)                          │
+│                      NAVEGADOR WEB                              │
+│                   (Usuario / Cliente)                           │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     API REST (Flask)                            │
+│                 APLICACIÓN WEB (Flask + Jinja2)                 │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
 │  │   Colors    │  │  Wood Types │  │  Furniture  │   ...        │
 │  │   Module    │  │   Module    │  │   Module    │              │
 │  └─────────────┘  └─────────────┘  └─────────────┘              │
+├─────────────────────────────────────────────────────────────────┤
+│                    CAPA DE VISTAS                               │
+│              (Templates Jinja2 / HTML)                          │
 ├─────────────────────────────────────────────────────────────────┤
 │                    CAPA DE SERVICIOS                            │
 │              (Lógica de Negocio / Validaciones)                 │
@@ -39,26 +42,39 @@ responsabilidades y bajo acoplamiento.
 
 ## 🧱 Capas de la Arquitectura
 
-### 1. Capa de Presentación (routes.py)
+### 1. Capa de Presentación (routes.py + templates/)
 
-**Responsabilidad:** Manejar las peticiones HTTP y devolver respuestas JSON.
+**Responsabilidad:** Manejar las peticiones HTTP y renderizar vistas HTML con Jinja2.
 
 ```python
 # app/catalogs/colors/routes.py
 
 @colors_bp.route('/', methods=['GET'])
-def get_all_colors():
-    """Endpoint para obtener todos los colores."""
+def list_colors():
+    """Muestra la lista de colores del catálogo."""
     colors = ColorService.get_all()
-    return success_response(data=colors)
+    return render_template('colors/list.html', colors=colors)
+
+
+@colors_bp.route('/', methods=['POST'])
+def create_color():
+    """Crea un nuevo color desde formulario."""
+    data = {'name': request.form.get('name')}
+    try:
+        ColorService.create(data)
+        flash('Color creado exitosamente', 'success')
+    except (ValidationError, ConflictError) as e:
+        flash(e.message, 'error')
+    return redirect(url_for('colors.list_colors'))
 ```
 
 **Características:**
 
-- Define los endpoints REST de la API
-- Valida parámetros de entrada básicos
+- Define las rutas y renderiza templates Jinja2
+- Recibe datos desde formularios HTML (`request.form`)
 - Delega la lógica de negocio a la capa de servicios
-- Utiliza respuestas estandarizadas
+- Usa `flash()` para mensajes de retroalimentación al usuario
+- Redirige después de operaciones POST (patrón PRG)
 
 ---
 
@@ -73,18 +89,20 @@ class ColorService:
     @staticmethod
     def get_all() -> list:
         """Obtiene todos los colores activos."""
-        colors = Color.query.filter_by(is_active=True).all()
-        return [color.to_dict() for color in colors]
+        return Color.query.filter_by(active=True).all()
 
     @staticmethod
     def create(data: dict) -> dict:
         """Crea un nuevo color con validaciones de negocio."""
-        # Validar que no exista un color con el mismo nombre
-        existing = Color.query.filter_by(name=data['name']).first()
-        if existing:
-            raise ConflictError(f"Ya existe un color con el nombre '{data['name']}'")
+        name = data.get('name')
+        if not name or not name.strip():
+            raise ValidationError('El nombre del color es requerido')
 
-        color = Color(**data)
+        existing = Color.query.filter_by(name=name.strip()).first()
+        if existing:
+            raise ConflictError(f"Ya existe un color con el nombre '{name}'")
+
+        color = Color(name=name.strip())
         db.session.add(color)
         db.session.commit()
         return color.to_dict()
@@ -163,23 +181,25 @@ migrate = Migrate()
 ### Petición GET (Lectura)
 
 ```
-Cliente → routes.py → services.py → models/ → Base de Datos
-                                        ↓
-Cliente ← routes.py ← services.py ← models/ ← Datos
+Navegador → routes.py → services.py → models/ → Base de Datos
+                                          ↓
+Navegador ← template.html ← routes.py ← services.py ← models/ ← Datos
 ```
 
-### Petición POST (Creación)
+### Petición POST (Creación via formulario)
 
 ```
-Cliente (JSON) → routes.py (validación básica)
-                     ↓
-               services.py (validación de negocio)
-                     ↓
-               models/ (crear entidad)
-                     ↓
-               Base de Datos (INSERT)
-                     ↓
-Cliente ← routes.py ← services.py ← Entidad creada
+Navegador (Form) → routes.py (recibe request.form)
+                       ↓
+                 services.py (validación de negocio)
+                       ↓
+                 models/ (crear entidad)
+                       ↓
+                 Base de Datos (INSERT)
+                       ↓
+                 routes.py → flash() + redirect
+                       ↓
+Navegador ← Redirección a la vista (patrón PRG)
 ```
 
 ---
@@ -203,14 +223,26 @@ AppException (Base)
 
 ```python
 # En services.py - Se lanza la excepción
-def get_by_id(color_id: int) -> dict:
-    color = Color.query.get(color_id)
-    if not color:
-        raise NotFoundError(f"Color con ID {color_id} no encontrado")
-    return color.to_dict()
+def create(data: dict) -> dict:
+    name = data.get('name')
+    if not name or not name.strip():
+        raise ValidationError('El nombre del color es requerido')
+    # ...
 
 
-# En exceptions.py - Se captura globalmente
+# En routes.py - Se captura en la ruta con try/except
+@colors_bp.route('/', methods=['POST'])
+def create_color():
+    data = {'name': request.form.get('name')}
+    try:
+        ColorService.create(data)
+        flash('Color creado exitosamente', 'success')
+    except (ValidationError, ConflictError) as e:
+        flash(e.message, 'error')
+    return redirect(url_for('colors.list_colors'))
+
+
+# En exceptions.py - Se mantiene el handler global para errores no capturados
 @app.errorhandler(AppException)
 def handle_app_exception(error):
     response = jsonify(error.to_dict())
@@ -229,9 +261,13 @@ app/
 ├── catalogs/
 │   └── colors/
 │       ├── __init__.py      # Blueprint
-│       ├── routes.py        # Endpoints
-│       ├── services.py      # Lógica de negocio
-│       └── schemas.py       # Validación (opcional)
+│       ├── routes.py        # Rutas y controladores
+│       └── services.py      # Lógica de negocio
+│
+├── templates/
+│   ├── base.html            # Template base (layout)
+│   └── colors/
+│       └── list.html         # Vista de colores
 ```
 
 ### Registro de Blueprints
@@ -244,7 +280,7 @@ def create_app():
 
     # Registrar blueprints
     from app.catalogs.colors import colors_bp
-    app.register_blueprint(colors_bp, url_prefix='/api/v1/colors')
+    app.register_blueprint(colors_bp, url_prefix='/colors')
 
     return app
 ```
@@ -255,18 +291,19 @@ def create_app():
 
 ### Extensiones Actuales
 
-| Extensión        | Propósito              |
-|------------------|------------------------|
-| Flask-SQLAlchemy | ORM para base de datos |
-| Flask-Migrate    | Migraciones de BD      |
+| Extensión        | Propósito                              |
+|------------------|----------------------------------------|
+| Flask-SQLAlchemy | ORM para base de datos                 |
+| Flask-Migrate    | Migraciones de BD                      |
+| Jinja2           | Motor de templates (incluido en Flask) |
 
 ### Extensiones Recomendadas (Futuro)
 
-| Extensión          | Propósito                     |
-|--------------------|-------------------------------|
-| Flask-Marshmallow  | Serialización/Validación      |
-| Flask-JWT-Extended | Autenticación JWT             |
-| Flask-CORS         | Cross-Origin Resource Sharing |
+| Extensión       | Propósito                             |
+|-----------------|---------------------------------------|
+| Flask-WTF       | Validación de formularios con CSRF    |
+| Flask-Login     | Autenticación y manejo de sesiones    |
+| Bootstrap/CSS   | Estilos para los templates            |
 
 ---
 
@@ -288,6 +325,11 @@ backend-furniture-store/
 │   │
 │   ├── models/                       # Modelos de datos
 │   │   └── color.py
+│   │
+│   ├── templates/                    # Templates Jinja2
+│   │   ├── base.html                 # Template base (layout)
+│   │   └── colors/
+│   │       └── list.html             # Vista de colores
 │   │
 │   └── utils/                        # Utilidades comunes
 │       ├── __init__.py
