@@ -9,13 +9,14 @@
 
 <h2>Lista de colores</h2>
 {% if colors %}
-<table border="1" cellpadding="5" cellspacing="0">
+<table border="1" cellpadding="5" cellspacing="0" aria-label="Tabla del catálogo de colores">
+    <caption>Tabla del catálogo de colores</caption>
     <thead>
         <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Activo</th>
-            <th>Creado</th>
+            <th scope="col">ID</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Activo</th>
+            <th scope="col">Creado</th>
         </tr>
     </thead>
     <tbody>
