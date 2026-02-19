@@ -92,9 +92,13 @@ class Color(db.Model):
 catalogs/
 └── colors/
     ├── __init__.py      # Blueprint y exports
-    ├── routes.py        # Endpoints de la API
+    ├── routes.py        # Rutas y controladores
     ├── services.py      # Lógica de negocio
-    └── schemas.py       # Validación de datos (opcional)
+    └── forms.py         # Formularios con WTForms
+
+templates/
+└── colors/
+    └── create.html      # Formulario de creación
 ```
 
 ### Contenido de `__init__.py`
@@ -117,40 +121,65 @@ from . import routes  # noqa: E402, F401
 
 ```python
 """
-Rutas/Endpoints para el módulo de colores.
+Rutas/Controladores para el módulo de colores.
 """
 
-from flask import request
+from flask import flash, redirect, render_template, url_for
+
 from . import colors_bp
+from .forms import ColorForm
 from .services import ColorService
-from app.utils.responses import success_response, error_response
+from app.exceptions import ConflictError
 
 
-@colors_bp.route('/', methods=['GET'])
-def get_all_colors():
+@colors_bp.route('/create', methods=['GET', 'POST'])
+def create_color():
     """
-    Obtiene todos los colores del catálogo.
+    Muestra el formulario y crea un nuevo color.
+    
+    GET: Renderiza el formulario de creación.
+    POST: Valida el formulario, crea el color y redirige.
     
     Returns:
-        JSON: Lista de colores
+        GET - HTML: Página con el formulario
+        POST - Redirect: Redirige con mensaje flash
     """
-    colors = ColorService.get_all()
-    return success_response(data=colors, message="Colores obtenidos exitosamente")
+    form = ColorForm()
+
+    if form.validate_on_submit():
+        data = {'name': form.name.data}
+        try:
+            ColorService.create(data)
+            flash('Color creado exitosamente', 'success')
+            return redirect(url_for('colors.create_color'))
+        except ConflictError as e:
+            flash(e.message, 'error')
+
+    return render_template('colors/create.html', form=form)
+```
+
+### Contenido de `forms.py`
+
+```python
+"""
+Formularios para el módulo de colores.
+"""
+
+from flask_wtf import FlaskForm
+from wtforms import StringField
+from wtforms.validators import DataRequired, Length
 
 
-@colors_bp.route('/<int:color_id>', methods=['GET'])
-def get_color(color_id: int):
-    """
-    Obtiene un color por su ID.
-    
-    Args:
-        color_id: ID del color
-        
-    Returns:
-        JSON: Datos del color
-    """
-    color = ColorService.get_by_id(color_id)
-    return success_response(data=color)
+class ColorForm(FlaskForm):
+    """Formulario para crear un color."""
+
+    name = StringField(
+        'Nombre',
+        validators=[
+            DataRequired(message='El nombre del color es requerido'),
+            Length(max=50, message='El nombre no puede exceder 50 caracteres'),
+        ],
+    )
 ```
 
 ### Contenido de `services.py`
@@ -162,40 +191,38 @@ Servicios de lógica de negocio para colores.
 
 from app.models.color import Color
 from app.extensions import db
-from app.exceptions import NotFoundError, ValidationError
+from app.exceptions import ConflictError, ValidationError
 
 
 class ColorService:
     """Servicio para operaciones de negocio relacionadas con colores."""
 
     @staticmethod
-    def get_all() -> list:
+    def create(data: dict) -> dict:
         """
-        Obtiene todos los colores activos.
-        
-        Returns:
-            list: Lista de colores serializados
-        """
-        colors = Color.query.filter_by(is_active=True).all()
-        return [color.to_dict() for color in colors]
-
-    @staticmethod
-    def get_by_id(color_id: int) -> dict:
-        """
-        Obtiene un color por su ID.
+        Crea un nuevo color.
         
         Args:
-            color_id: ID del color
+            data: Diccionario con los datos del color
             
         Returns:
-            dict: Color serializado
+            dict: Color creado serializado
             
         Raises:
-            NotFoundError: Si el color no existe
+            ValidationError: Si el nombre está vacío
+            ConflictError: Si el color ya existe
         """
-        color = Color.query.get(color_id)
-        if not color:
-            raise NotFoundError(f"Color con ID {color_id} no encontrado")
+        name = data.get('name')
+        if not name or not name.strip():
+            raise ValidationError('El nombre del color es requerido')
+
+        existing = Color.query.filter_by(name=name.strip()).first()
+        if existing:
+            raise ConflictError(f"Ya existe un color con el nombre '{name}'")
+
+        color = Color(name=name.strip())
+        db.session.add(color)
+        db.session.commit()
         return color.to_dict()
 ```
 
@@ -252,67 +279,63 @@ def find_color(color_id: int) -> Optional[Color]:
 
 ---
 
-## 🌐 Convenciones de API REST
+## 🌐 Convenciones de Rutas y Vistas
 
 ### URLs
 
 | Acción     | Método | URL                       | Ejemplo            |
-|------------|--------|---------------------------|--------------------|
-| Listar     | GET    | `/api/v1/{recursos}`      | `/api/v1/colors`   |
-| Obtener    | GET    | `/api/v1/{recursos}/{id}` | `/api/v1/colors/1` |
-| Crear      | POST   | `/api/v1/{recursos}`      | `/api/v1/colors`   |
-| Actualizar | PUT    | `/api/v1/{recursos}/{id}` | `/api/v1/colors/1` |
-| Eliminar   | DELETE | `/api/v1/{recursos}/{id}` | `/api/v1/colors/1` |
+|------------|--------|---------------------------|--------------------|   
+| Listar     | GET    | `/{recurso}/`             | `/colors/`         |
+| Crear      | POST   | `/{recurso}/`             | `/colors/`         |
+| Detalle    | GET    | `/{recurso}/{id}`         | `/colors/1`        |
+| Editar     | POST   | `/{recurso}/{id}/edit`    | `/colors/1/edit`   |
+| Eliminar   | POST   | `/{recurso}/{id}/delete`  | `/colors/1/delete` |
 
-### Respuestas JSON
+### Templates Jinja2
 
-#### Respuesta Exitosa
+#### Template Base (`base.html`)
 
-```json
-{
-  "success": true,
-  "message": "Color creado exitosamente",
-  "data": {
-    "id": 1,
-    "name": "Rojo",
-    "hex_code": "#FF0000"
-  }
-}
+Todos los templates extienden de `base.html` que contiene:
+- Estructura HTML común
+- Navegación
+- Bloque de mensajes flash
+- Bloque `content` para contenido específico
+
+```html
+{%- raw %}
+{% extends "base.html" %}
+{% block title %}Título - Furniture Store{% endblock %}
+{% block content %}
+    <!-- Contenido específico -->
+{% endblock %}
+{%- endraw %}
 ```
 
-#### Respuesta de Error
+#### Organización de Templates
 
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Color no encontrado",
-    "code": 404,
-    "details": {
-      "color_id": 999
-    }
-  }
-}
+```
+templates/
+├── base.html              # Layout base
+└── colors/                # Templates por módulo
+    └── list.html          # Listado + formulario
 ```
 
-#### Respuesta Paginada
+#### Mensajes Flash
 
-```json
-{
-  "success": true,
-  "message": "Colores obtenidos exitosamente",
-  "data": [
-    ...
-  ],
-  "pagination": {
-    "page": 1,
-    "per_page": 10,
-    "total": 50,
-    "total_pages": 5,
-    "has_next": true,
-    "has_prev": false
-  }
-}
+Se usa `flash()` para retroalimentación al usuario:
+
+```python
+# En routes.py
+flash('Color creado exitosamente', 'success')  # Mensaje de éxito
+flash(e.message, 'error')                      # Mensaje de error
+```
+
+#### Patrón PRG (Post/Redirect/Get)
+
+Después de un POST exitoso, siempre redirigir:
+
+```python
+return redirect(url_for('colors.create_color'))
 ```
 
 ---
@@ -349,18 +372,23 @@ tests/
 ### Nomenclatura de Tests
 
 ```python
-def test_get_all_colors_returns_list():
-    """Test: GET /colors retorna lista de colores."""
+def test_create_color_form_renders_template():
+    """Test: GET /colors/create renderiza el formulario."""
     pass
 
 
-def test_get_color_by_id_not_found_returns_404():
-    """Test: GET /colors/{id} retorna 404 si no existe."""
+def test_create_color_with_valid_data_redirects():
+    """Test: POST /colors/create con datos válidos redirige."""
     pass
 
 
-def test_create_color_with_valid_data_returns_201():
-    """Test: POST /colors con datos válidos retorna 201."""
+def test_create_color_with_empty_name_shows_form_error():
+    """Test: POST /colors/create sin nombre muestra error del formulario."""
+    pass
+
+
+def test_create_color_duplicate_shows_error_flash():
+    """Test: POST /colors/create con nombre duplicado muestra flash de error."""
     pass
 ```
 
@@ -380,14 +408,16 @@ from datetime import datetime
 from typing import List, Optional
 
 # 2. Librerías de terceros
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, flash, redirect, render_template, url_for
+from flask_wtf import FlaskForm
+from wtforms import StringField
+from wtforms.validators import DataRequired
 from sqlalchemy import or_, and_
 
 # 3. Imports locales
-from app.extensions import db
+from app.extensions import db, csrf
 from app.models.color import Color
-from app.exceptions import NotFoundError
-from app.utils.responses import success_response
+from app.exceptions import ConflictError
 ```
 
 ---
@@ -399,7 +429,10 @@ from app.utils.responses import success_response
 - [ ] Se usan type hints
 - [ ] Los nombres son descriptivos y siguen las convenciones
 - [ ] Las excepciones se manejan correctamente
-- [ ] Los endpoints usan las respuestas estandarizadas
+- [ ] Los formularios usan `FlaskForm` con validadores
+- [ ] Los templates incluyen `form.hidden_tag()` para CSRF
+- [ ] Los templates muestran errores de formulario
+- [ ] Se aplica el patrón PRG después de POST
 - [ ] No hay código comentado innecesario
 - [ ] Los imports están ordenados correctamente
 

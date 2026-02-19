@@ -6,7 +6,7 @@ que permiten un manejo consistente de errores en toda la aplicación.
 """
 
 from typing import Optional
-from flask import jsonify
+from flask import render_template
 
 
 class AppException(Exception):
@@ -62,42 +62,6 @@ class ConflictError(AppException):
         super().__init__(message, status_code=409, payload=payload)
 
 
-class UnauthorizedError(AppException):
-    """Excepción para accesos no autorizados."""
-
-    def __init__(self, message: str = "No autorizado", payload: Optional[dict] = None):
-        super().__init__(message, status_code=401, payload=payload)
-
-
-class ForbiddenError(AppException):
-    """Excepción para accesos prohibidos."""
-
-    def __init__(
-        self, message: str = "Acceso prohibido", payload: Optional[dict] = None
-    ):
-        super().__init__(message, status_code=403, payload=payload)
-
-
-class DatabaseError(AppException):
-    """Excepción para errores de base de datos."""
-
-    def __init__(
-        self, message: str = "Error en la base de datos", payload: Optional[dict] = None
-    ):
-        super().__init__(message, status_code=500, payload=payload)
-
-
-class BusinessLogicError(AppException):
-    """Excepción para errores de lógica de negocio."""
-
-    def __init__(
-        self,
-        message: str = "Error en la lógica de negocio",
-        payload: Optional[dict] = None,
-    ):
-        super().__init__(message, status_code=422, payload=payload)
-
-
 def register_error_handlers(app):
     """
     Registra los manejadores de errores globales en la aplicación Flask.
@@ -109,19 +73,24 @@ def register_error_handlers(app):
     @app.errorhandler(AppException)
     def handle_app_exception(error):
         """Manejador para excepciones personalizadas de la aplicación."""
-        response = jsonify(error.to_dict())
-        response.status_code = error.status_code
-        return response
+        app.logger.error(f"AppException: {error.message}")
+        return (
+            render_template(
+                "errors/error.html",
+                code=error.status_code,
+                message=error.message,
+            ),
+            error.status_code,
+        )
 
     @app.errorhandler(400)
     def handle_bad_request(error):
         """Manejador para errores 400 Bad Request."""
         return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": {"message": "Solicitud incorrecta", "code": 400},
-                }
+            render_template(
+                "errors/error.html",
+                code=400,
+                message="Solicitud incorrecta",
             ),
             400,
         )
@@ -130,11 +99,10 @@ def register_error_handlers(app):
     def handle_not_found(error):
         """Manejador para errores 404 Not Found."""
         return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": {"message": "Recurso no encontrado", "code": 404},
-                }
+            render_template(
+                "errors/error.html",
+                code=404,
+                message="Página no encontrada",
             ),
             404,
         )
@@ -143,11 +111,10 @@ def register_error_handlers(app):
     def handle_method_not_allowed(error):
         """Manejador para errores 405 Method Not Allowed."""
         return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": {"message": "Método no permitido", "code": 405},
-                }
+            render_template(
+                "errors/error.html",
+                code=405,
+                message="Método no permitido",
             ),
             405,
         )
@@ -155,12 +122,12 @@ def register_error_handlers(app):
     @app.errorhandler(500)
     def handle_internal_error(error):
         """Manejador para errores 500 Internal Server Error."""
+        app.logger.error(f"500 Error: {error}")
         return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": {"message": "Error interno del servidor", "code": 500},
-                }
+            render_template(
+                "errors/error.html",
+                code=500,
+                message="Error interno del servidor",
             ),
             500,
         )
