@@ -2,7 +2,7 @@ from flask import Flask
 
 from config import Config
 from .exceptions import register_error_handlers
-from .extensions import db, migrate
+from .extensions import csrf, db, migrate
 
 
 def create_app():
@@ -24,6 +24,7 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
 
     # Import models to register them with SQLAlchemy
     from . import models  # noqa: F401
@@ -32,7 +33,7 @@ def create_app():
     register_error_handlers(app)
 
     # Register blueprints
-    # from .catalogs.colors import colors_bp
-    # app.register_blueprint(colors_bp, url_prefix='/api/v1/colors')
+    from .catalogs.colors import colors_bp
+    app.register_blueprint(colors_bp, url_prefix='/colors')
 
     return app
