@@ -37,6 +37,7 @@ class WoodTypeService:
             ConflictError: Si ya existe un tipo de madera con el mismo nombre
         """
         name = data.get("name")
+        description = data.get("description")   
 
         if not name or not name.strip():
             raise ValidationError("El nombre del tipo de madera es requerido")
@@ -47,7 +48,7 @@ class WoodTypeService:
         if existing:
             raise ConflictError(f"Ya existe un tipo de madera con el nombre '{name}'")
 
-        wood_type = WoodType(name=name)
+        wood_type = WoodType(name=name, description=description)
         db.session.add(wood_type)
 
         try:
