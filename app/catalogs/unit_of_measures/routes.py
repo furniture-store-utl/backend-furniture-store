@@ -25,3 +25,29 @@ def list_unit_of_measures():
     """
     unit_of_measures = UnitOfMeasureService.get_all()
     return render_template("unit_of_measures/list.html", unit_of_measures=unit_of_measures)
+
+@unit_of_measures_bp.route("/create", methods=["GET", "POST"])
+def create_unit_of_measure():
+    """
+    Muestra el formulario para crear una nueva unidad de medida y crea una nueva unidad de medida en el catálogo.
+
+    GET: Muestra el formulario de creación.
+    POST: Valida el formulario y crea una nueva unidad de medida.
+
+    Returns:
+        GET - HTML: Página con el formulario de creación.
+        POST - REDIRECT: Redirige al formulario de creación con mensaje flash.
+    """
+    form = UnitOfMeasureForm()
+
+    if form.validate_on_submit():
+        data = {
+            "name": form.name.data}
+        try:
+            UnitOfMeasureService.create(data)
+            flash("Unidad de medida creada exitosamente", "success")
+            return redirect(url_for("unit_of_measures.create_unit_of_measures"))
+        except (ConflictError, ValidationError) as e:
+            flash(str(e), "danger")
+    
+    return render_template("unit_of_measures/create.html", form=form)

@@ -45,3 +45,19 @@ class UnitOfMeasure(db.Model):
     created_by = db.Column(db.String(100), nullable=True)
     updated_by = db.Column(db.String(100), nullable=True)
     deleted_by = db.Column(db.String(100), nullable=True)
+
+    def to_dict(self) -> dict:
+        """
+        Convierte el objeto UnitOfMeasure a un diccionario.
+
+        Returns:
+            dict: Diccionario con los atributos del objeto UnitOfMeasure
+        """
+        return {
+            "id_unit_of_measure": self.id_unit_of_measure,
+            "name": self.name,
+            "abbreviation": self.abbreviation,
+            "active": self.active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
