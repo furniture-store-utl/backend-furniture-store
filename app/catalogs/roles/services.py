@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.models.role import Role
-from app.exceptions import ConflictError, ValidationError
+from app.exceptions import ConflictError, ValidationError, NotFoundError
 
 
 class RoleService:
@@ -56,6 +56,65 @@ class RoleService:
         except IntegrityError:
             db.session.rollback()
             raise ConflictError(f"Ya existe un rol con el nombre '{name}'")
+
+        return role.to_dict()
+    
+    @staticmethod
+    def get_by_id(id_role: int) -> Role:
+        """
+        Obtiene un rol por su ID.
+        
+        Args:
+            id_role: Identificador del rol.
+            
+        Returns:
+            Role: Objeto del rol encontrado.
+            
+        Raises:
+            NotFoundError: Si el rol no existe.
+        """
+        role = Role.query.get(id_role)
+        if not role:
+            raise NotFoundError(f"No se encontró el rol con ID {id_role}")
+        return role
+
+    @staticmethod
+    def update(id_role: int, data: dict) -> dict:
+        """
+        Actualiza un rol existente con validaciones de negocio.
+
+        Args:
+            id_role: ID del rol a actualizar.
+            data: Diccionario con los datos del rol (name requerido).
+
+        Returns:
+            dict: Rol actualizado serializado.
+
+        Raises:
+            NotFoundError: Si el rol no existe.
+            ValidationError: Si el nombre está vacío.
+            ConflictError: Si ya existe otro rol con el mismo nombre.
+        """
+        role = RoleService.get_by_id(id_role)
+
+        name = data.get("name")
+        if not name or not name.strip():
+            raise ValidationError("El nombre del rol es requerido")
+
+        name = name.strip()
+
+        # Verificar si existe OTRO rol diferente que ya tenga este nombre
+        existing = Role.query.filter(Role.name == name, Role.id_role != id_role).first()
+        if existing:
+            raise ConflictError(f"Ya existe un rol con el nombre '{name}'")
+
+        role.name = name
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            raise ConflictError(f"Error de integridad al actualizar el rol '{name}'")
 
         return role.to_dict()
 
