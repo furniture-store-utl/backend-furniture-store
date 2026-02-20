@@ -35,5 +35,8 @@ def create_app():
     # Register blueprints
     from .catalogs.colors import colors_bp
     app.register_blueprint(colors_bp, url_prefix='/colors')
+    
+    from .catalogs.roles import roles_bp
+    app.register_blueprint(roles_bp, url_prefix='/roles')
 
     return app
