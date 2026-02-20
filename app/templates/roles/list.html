@@ -28,7 +28,7 @@
             <th scope="col">Nombre</th>
             <th scope="col">Activo</th>
             <th scope="col">Creado</th>
-        </tr>
+            <th scope="col">Acciones</th> </tr>
     </thead>
     <tbody>
         {% for role in roles %}
@@ -37,6 +37,21 @@
             <td>{{ role.name }}</td>
             <td>{{ "Sí" if role.active else "No" }}</td>
             <td>{{ role.created_at.strftime('%Y-%m-%d %H:%M') if role.created_at else 'N/A' }}</td>
+            <td>
+                <a href="{{ url_for('roles.edit_role', id_role=role.id_role) }}">Editar</a>
+                
+                <form method="POST" 
+                      action="{{ url_for('roles.delete_role', id_role=role.id_role) }}" 
+                      style="display:inline;"
+                      onsubmit="return confirm('¿Estás seguro de que deseas eliminar este rol?');">
+                    
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <button type="submit" style="color: red; background: none; border: none; cursor: pointer; text-decoration: underline;">
+                        Eliminar
+                    </button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
