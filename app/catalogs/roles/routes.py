@@ -2,12 +2,12 @@
 Rutas/Endpoints para el módulo de roles.
 """
 
-from flask import flash, redirect, render_template, url_for
+from flask import flash, redirect, render_template, request, url_for
 
 from . import roles_bp
 from .forms import RoleForm
 from .services import RoleService
-from app.exceptions import ConflictError
+from app.exceptions import ConflictError, NotFoundError, ValidationError
 
 
 @roles_bp.route("/", methods=["GET"])
@@ -46,3 +46,39 @@ def create_role():
             flash(e.message, "error")
 
     return render_template("roles/create.html", form=form)
+
+
+@roles_bp.route("/<int:id_role>/edit", methods=["GET", "POST"])
+def edit_role(id_role: int):
+    """
+    Muestra el formulario pre-poblado y actualiza un rol existente.
+
+    GET: Renderiza el formulario con los datos actuales del rol.
+    POST: Valida el formulario, actualiza el rol y redirige (Patrón PRG).
+
+    Returns:
+        GET - HTML: Página con el formulario de edición de rol.
+        POST - Redirect: Redirige a la lista o al formulario con mensaje flash.
+    """
+    try:
+        role = RoleService.get_by_id(id_role)
+    except NotFoundError as e:
+        flash(e.message, "error")
+        return redirect(url_for("roles.list_roles"))
+
+    form = RoleForm()
+
+    if form.validate_on_submit():
+        data = {"name": form.name.data}
+        try:
+            RoleService.update(id_role, data)
+            flash("Rol actualizado exitosamente", "success")
+            return redirect(url_for("roles.list_roles"))
+        except (ConflictError, ValidationError) as e:
+            flash(e.message, "error")
+            
+    elif request.method == "GET":
+        # Pre-poblar el formulario en peticiones GET
+        form.name.data = role.name
+
+    return render_template("roles/edit.html", form=form, role=role)
