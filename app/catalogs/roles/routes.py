@@ -82,3 +82,23 @@ def edit_role(id_role: int):
         form.name.data = role.name
 
     return render_template("roles/edit.html", form=form, role=role)
+
+
+@roles_bp.route("/<int:id_role>/delete", methods=["POST"])
+def delete_role(id_role: int):
+    """
+    Ejecuta la eliminación lógica de un rol.
+
+    POST: Marca el rol como inactivo y redirige.
+
+    Returns:
+        Redirect: Redirige a la lista de roles con un mensaje flash.
+    """
+    try:
+        RoleService.delete(id_role)
+        flash("Rol eliminado exitosamente", "success")
+    except NotFoundError as e:
+        flash(e.message, "error")
+    
+    # Redirección al listado (Patrón PRG)
+    return redirect(url_for("roles.list_roles"))

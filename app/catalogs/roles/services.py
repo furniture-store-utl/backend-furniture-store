@@ -3,6 +3,7 @@ Servicios de lógica de negocio para roles.
 """
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql import func
 
 from app.extensions import db
 from app.models.role import Role
@@ -118,3 +119,25 @@ class RoleService:
 
         return role.to_dict()
 
+    @staticmethod
+    def delete(id_role: int) -> None:
+        """
+        Realiza una eliminación lógica (Soft Delete) de un rol.
+
+        Marca el rol como inactivo y establece la fecha de eliminación.
+        No elimina el registro de la base de datos.
+
+        Args:
+            id_role: Identificador del rol a eliminar.
+
+        Raises:
+            NotFoundError: Si el rol no existe.
+        """
+        # Reutilizamos el método get_by_id para aprovechar la validación de existencia
+        role = RoleService.get_by_id(id_role)
+
+        # Aplicamos el Soft Delete
+        role.active = False
+        role.deleted_at = func.current_timestamp()
+
+        db.session.commit()
