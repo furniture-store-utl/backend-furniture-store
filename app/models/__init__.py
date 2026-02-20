@@ -1,2 +1,2 @@
 from .color import Color
-from .wood_type import WoodType
+from .role import Role
