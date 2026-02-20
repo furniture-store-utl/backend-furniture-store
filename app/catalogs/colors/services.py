@@ -44,7 +44,7 @@ class ColorService:
 
         name = name.strip()
 
-        existing = Color.query.filter_by(name=name).first()
+        existing = Color.query.filter(func.lower(Color.name) == name.lower()).first()
         if existing:
             raise ConflictError(f"Ya existe un color con el nombre '{name}'")
 
@@ -75,7 +75,7 @@ class ColorService:
         """
         color = Color.query.get(id_color)
 
-        if not color or not color.active:
+        if not color:
             raise NotFoundError(f"No se encontró un color con ID {id_color}")
         return color
 
