@@ -2,9 +2,9 @@
 Rutas/Endpoints para el módulo de colores.
 """
 
-from flask import flash, redirect, render_template, url_for
+from flask import flash, redirect, render_template, request, url_for
 
-from app.exceptions import ConflictError
+from app.exceptions import ConflictError, NotFoundError, ValidationError
 from . import colors_bp
 from .forms import ColorForm
 from .services import ColorService
@@ -60,16 +60,25 @@ def edit_color(id_color: int):
         GET - HTML: Página con el formulario de edición de color.
         POST - Redirect: Redirige al formulario con mensaje flash
     """
-    color = ColorService.get_by_id(id_color)
-    form = ColorForm(obj=color)
+    try:
+        color = ColorService.get_by_id(id_color)
+    except NotFoundError as e:
+        flash(e.message, "error")
+        return redirect(url_for("colors.list_colors"))
+
+    form = ColorForm()
 
     if form.validate_on_submit():
         data = {"name": form.name.data}
         try:
             ColorService.update(id_color, data)
             flash("Color actualizado exitosamente", "success")
-            return redirect(url_for("colors.edit_color", id_color=id_color))
-        except ConflictError as e:
+            return redirect(url_for("colors.list_colors"))
+        except (ConflictError, ValidationError) as e:
             flash(e.message, "error")
+
+    elif request.method == "GET":
+        # Pre-poblar el formulario en peticiones GET
+        form.name.data = color.name
 
     return render_template("colors/edit.html", form=form, color=color)
