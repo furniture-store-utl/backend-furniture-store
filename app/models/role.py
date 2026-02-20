@@ -41,3 +41,18 @@ class Role(db.Model):
     created_by = db.Column(db.String(100), nullable=True)
     updated_by = db.Column(db.String(100), nullable=True)
     deleted_by = db.Column(db.String(100), nullable=True)
+    
+    def to_dict(self) -> dict:
+        """
+        Serializa el modelo a diccionario.
+
+        Returns:
+            dict: Representación del rol en formato diccionario
+        """
+        return {
+            "id_role": self.id_role,
+            "name": self.name,
+            "active": self.active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
