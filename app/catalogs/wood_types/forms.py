@@ -16,7 +16,7 @@ class WoodTypeForm(FlaskForm):
             DataRequired(message="El nombre del tipo de madera es requerido"),
             Length(max=50, message="El nombre no puede exceder 50 caracteres"),
         ],
-    ),
+    )
     description = StringField(
         "Descripción",
         validators=[
