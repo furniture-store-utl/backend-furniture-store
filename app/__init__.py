@@ -39,4 +39,7 @@ def create_app():
     from .catalogs.roles import roles_bp
     app.register_blueprint(roles_bp, url_prefix='/roles')
 
+    from .catalogs.wood_types import woods_types_bp
+    app.register_blueprint(woods_types_bp, url_prefix='/wood-types')
+
     return app
