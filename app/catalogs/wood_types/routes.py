@@ -82,3 +82,21 @@ def edit_wood_type(id_wood_type: int):
     form.description.data = wood_type.description
 
     return render_template("wood_types/edit.html", form=form, wood_type=wood_type)
+
+@woods_types_bp.route("/<int:id_wood_type>/delete", methods=["POST"])
+def delete_wood_type(id_wood_type: int):    
+    """
+    Elimina un tipo de madera existente.
+
+    POST: Elimina el tipo de madera y redirige.
+
+    Returns:
+        POST - Redirect: Redirige a la lista con mensaje flash
+    """
+    try:
+        WoodTypeService.delete(id_wood_type)
+        flash("Tipo de madera eliminado exitosamente", "success")
+    except Exception as e:
+        flash(str(e), "error")
+
+    return redirect(url_for("woods_types.list_wood_types"))
