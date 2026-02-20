@@ -39,4 +39,7 @@ def create_app():
     from .catalogs.roles import roles_bp
     app.register_blueprint(roles_bp, url_prefix='/roles')
 
+    from .catalogs.unit_of_measures import unit_of_measures_bp
+    app.register_blueprint(unit_of_measures_bp, url_prefix='/unit-of-measures')
+
     return app
