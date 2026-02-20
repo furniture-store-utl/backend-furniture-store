@@ -44,3 +44,14 @@ class WoodType(db.Model):
     created_by = db.Column(db.String(100), nullable=True)
     updated_by = db.Column(db.String(100), nullable=True)
     deleted_by = db.Column(db.String(100), nullable=True)
+    
+    def to_dict(self):
+        return {
+        "id_wood_type": self.id_wood_type,
+        "name": self.name,
+        "description": self.description,
+        "active": self.active,
+        "created_at": self.created_at,
+        "updated_at": self.updated_at,
+        "deleted_at": self.deleted_at,
+    }
