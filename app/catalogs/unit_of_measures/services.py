@@ -129,3 +129,21 @@ class UnitOfMeasureService:
             raise ConflictError("Ocurrió un error al actualizar la unidad de medida. Intente nuevamente.")
 
         return unit_of_measure.to_dict()
+    
+    @staticmethod
+    def delete(id_unit_of_measure: int) -> None:
+        """
+        Elimina una unidad de medida del catálogo.
+
+        Args:
+            id_unit_of_measure (int): Identificador único de la unidad de medida a eliminar
+
+        Raises:
+            NotFoundError: Si no se encuentra la unidad de medida con el identificador dado
+        """
+        unit_of_measure = UnitOfMeasureService.get_by_id(id_unit_of_measure)
+        
+        unit_of_measure.active = False
+        unit_of_measure.deleted_at = func.current_timestamp()
+
+        db.session.commit()

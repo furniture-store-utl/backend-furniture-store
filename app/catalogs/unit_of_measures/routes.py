@@ -97,3 +97,22 @@ def edit_unit_of_measure(id_unit_of_measure):
         form.active.data = unit_of_measure.active
 
     return render_template("unit_of_measures/edit.html", form=form, unit_of_measure=unit_of_measure)
+
+@unit_of_measures_bp.route("/<int:id_unit_of_measure>/delete", methods=["POST"])
+def delete_unit_of_measure(id_unit_of_measure: int):
+    """
+    Elimina una unidad de medida del catálogo.
+
+    Args:
+        id_unit_of_measure (int): Identificador único de la unidad de medida a eliminar
+
+    Returns:
+        REDIRECT: Redirige a la lista de unidades de medida con mensaje flash.
+    """
+    try:
+        UnitOfMeasureService.delete(id_unit_of_measure)
+        flash("Unidad de medida eliminada exitosamente", "success")
+    except NotFoundError:
+        flash("Unidad de medida no encontrada", "danger")
+    
+    return redirect(url_for("unit_of_measures.list_unit_of_measures"))

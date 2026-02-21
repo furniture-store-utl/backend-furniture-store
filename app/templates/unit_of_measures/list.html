@@ -36,7 +36,19 @@
             <td>{{ unit_of_measure.id_unit_of_measure }}</td>
             <td>{{ unit_of_measure.name }}</td>
             <td>{{ "Sí" if unit_of_measure.active else "No" }}</td>
-            <a href="{{ url_for('unit_of_measures.edit_unit_of_measure', id_unit_of_measure=unit_of_measure.id_unit_of_measure) }}"> Editar </a>        
+            <td>{{ unit_of_measure.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+            <td>
+            <a href="{{ url_for('unit_of_measures.edit_unit_of_measure', id_unit_of_measure=unit_of_measure.id_unit_of_measure) }}"> Editar </a>
+            
+            <form method="POST" 
+                action="{{ url_for('unit_of_measures.delete_unit_of_measure', id_unit_of_measure=unit_of_measure.id_unit_of_measure) }}" 
+                onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta unidad de medida?');"> 
+
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <button type="submit">Eliminar</button> 
+            </form> 
+        </td>
         </tr>
         {% endfor %}
     </tbody>
