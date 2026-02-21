@@ -1,6 +1,7 @@
 """
 Servicios de lógica de negocio para colores.
 """
+
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
@@ -104,8 +105,12 @@ class ColorService:
 
         name = name.strip()
 
-        existing = db.session.query(Color.id_color).filter(func.lower(Color.name) == name.lower(),
-                                                           Color.id_color != id_color).first() is not None
+        existing = (
+                db.session.query(Color.id_color)
+                .filter(func.lower(Color.name) == name.lower(), Color.id_color != id_color)
+                .first()
+                is not None
+        )
 
         if existing:
             raise ConflictError(f"Ya existe otro color con el nombre '{name}'")
@@ -119,3 +124,21 @@ class ColorService:
             raise ConflictError(f"Ya existe otro color con el nombre '{name}'")
 
         return color.to_dict()
+
+    @staticmethod
+    def delete(id_color: int) -> None:
+        """
+        Elimina un color con el ID.
+        Args:
+            id_color: Identificador del color a eliminar
+
+        Raises:
+            NotFoundError: Si no se encuentra un color con el ID
+
+        """
+        color = ColorService.get_by_id(id_color)
+
+        color.active = False
+        color.deleted_at = func.current_timestamp()
+
+        db.session.commit()

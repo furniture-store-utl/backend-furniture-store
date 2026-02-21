@@ -82,3 +82,25 @@ def edit_color(id_color: int):
         form.name.data = color.name
 
     return render_template("colors/edit.html", form=form, color=color)
+
+
+@colors_bp.route("/<int:id_color>/delete", methods=["POST"])
+def delete_color(id_color: int):
+    """
+    Ejecuta la eliminación logica de un color.
+
+    POST: Marca el color como inactivo y redirige
+
+    Returns:
+        Redirect: Redirige a la lista de colors con mensaje flash
+
+    Raises:
+        NotFoundError: Si no se encuentra un color con el ID
+    """
+    try:
+        ColorService.delete(id_color)
+        flash("Color eliminado exitosamente", "success")
+    except NotFoundError as e:
+        flash(e.message, "error")
+
+    return redirect(url_for("colors.list_colors"))
