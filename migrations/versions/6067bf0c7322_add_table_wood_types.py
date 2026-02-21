@@ -1,7 +1,7 @@
 """add table wood_types
 
 Revision ID: 6067bf0c7322
-Revises: 5aa5020316c5
+Revises: e57af1e0a8f8
 Create Date: 2026-02-18 01:13:08.227832
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '6067bf0c7322'
-down_revision = '5aa5020316c5'
+down_revision = 'e57af1e0a8f8'
 branch_labels = None
 depends_on = None
 

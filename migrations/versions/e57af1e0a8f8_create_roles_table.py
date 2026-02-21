@@ -1,7 +1,7 @@
 """create roles table
 
 Revision ID: e57af1e0a8f8
-Revises: 
+Revises: 5aa5020316c5
 Create Date: 2026-02-17 18:08:02.238330
 
 """

@@ -43,8 +43,38 @@ endblock %} {% block content %}
         {{ wood_type.created_at.strftime('%Y-%m-%d %H:%M') if
         wood_type.created_at else 'N/A' }}
       </td>
+      <td>
+        <a
+          href="{{ url_for('woods_types.edit_wood_type', id_wood_type=wood_type.id_wood_type) }}"
+          >Editar</a
+        >
+        <form
+          method="POST"
+          action="{{ url_for('woods_types.delete_wood_type', id_wood_type=wood_type.id_wood_type) }}"
+          style="display: inline"
+          onsubmit="
+            return confirm(
+              '¿Estás seguro de que deseas eliminar este tipo de madera?',
+            );
+          "
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            style="
+              color: red;
+              background: none;
+              border: none;
+              cursor: pointer;
+              text-decoration: underline;
+            "
+          >
+            Eliminar
+          </button>
+        </form>
 
-      {% endfor %}
+        {% endfor %}
+      </td>
     </tr>
   </tbody>
 </table>
