@@ -36,8 +36,7 @@
             <td>{{ unit_of_measure.id_unit_of_measure }}</td>
             <td>{{ unit_of_measure.name }}</td>
             <td>{{ "Sí" if unit_of_measure.active else "No" }}</td>
-            <td>{{ unit_of_measure.created_at.strftime('%Y-%m-%d %H:%M') if 
-                unit_of_measure.created_at else 'N/A' }}</td>       
+            <a href="{{ url_for('unit_of_measures.edit_unit_of_measure', id_unit_of_measure=unit_of_measure.id_unit_of_measure) }}"> Editar </a>        
         </tr>
         {% endfor %}
     </tbody>

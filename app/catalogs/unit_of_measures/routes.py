@@ -55,3 +55,45 @@ def create_unit_of_measure():
 
     
     return render_template("unit_of_measures/create.html", form=form)
+
+@unit_of_measures_bp.route("/<int:id_unit_of_measure>/edit", methods=["GET", "POST"])
+def edit_unit_of_measure(id_unit_of_measure):
+    """
+    Muestra el formulario para editar una unidad de medida existente y actualiza la unidad de medida en el catálogo.
+
+    GET: Muestra el formulario de edición con los datos actuales de la unidad de medida.
+    POST: Valida el formulario y actualiza la unidad de medida.
+
+    Args:
+        id_unit_of_measure (int): Identificador único de la unidad de medida a editar
+
+    Returns:
+        GET - HTML: Página con el formulario de edición.
+        POST - REDIRECT: Redirige al formulario de edición con mensaje flash.
+    """
+    try:
+        unit_of_measure = UnitOfMeasureService.get_by_id(id_unit_of_measure)
+    except NotFoundError:
+        flash("Unidad de medida no encontrada", "danger")
+        return redirect(url_for("unit_of_measures.list_unit_of_measures"))
+    
+    form = UnitOfMeasureForm()
+
+    if form.validate_on_submit():
+        data = {
+            "name": form.name.data,
+            "abbreviation": form.abbreviation.data
+        }
+        try:
+            UnitOfMeasureService.update(id_unit_of_measure, data)
+            flash("Unidad de medida actualizada exitosamente", "success")
+            return redirect(url_for("unit_of_measures.list_unit_of_measures"))
+        except (ConflictError, ValidationError) as e:
+            flash(str(e), "danger")
+
+    elif request.method == "GET":
+        form.name.data = unit_of_measure.name
+        form.abbreviation.data = unit_of_measure.abbreviation
+        form.active.data = unit_of_measure.active
+
+    return render_template("unit_of_measures/edit.html", form=form, unit_of_measure=unit_of_measure)
