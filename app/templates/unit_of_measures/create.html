@@ -10,13 +10,18 @@
 
     {{ form.name.label }}
     {{ form.name(size=30) }}
-    {{form.abbreviation.label}}
-    {{form.abbreviation(size=10)}}
     {% for error in form.name.errors %}
         <p style="color: red;">{{ error }}</p>
     {% endfor %}
+    {{form.abbreviation.label}}
+    {{form.abbreviation(size=10)}}
     {% for error in form.abbreviation.errors %}
         <p style="color: red;">{{ error }}</p>
+    {% endfor %}
+    {{ form.active.label }}
+    {{ form.active() }}
+    {% for error in form.active.errors %}
+        <p style="color: red;">{{ error }}</p> 
     {% endfor %}
 
     <button type="submit">Crear</button>

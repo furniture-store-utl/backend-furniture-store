@@ -42,12 +42,16 @@ def create_unit_of_measure():
 
     if form.validate_on_submit():
         data = {
-            "name": form.name.data}
+            "name": form.name.data,
+            "abbreviation": form.abbreviation.data,
+            "active": form.active.data
+        }
         try:
             UnitOfMeasureService.create(data)
             flash("Unidad de medida creada exitosamente", "success")
-            return redirect(url_for("unit_of_measures.create_unit_of_measures"))
+            return redirect(url_for("unit_of_measures.list_unit_of_measures"))
         except (ConflictError, ValidationError) as e:
             flash(str(e), "danger")
+
     
     return render_template("unit_of_measures/create.html", form=form)
